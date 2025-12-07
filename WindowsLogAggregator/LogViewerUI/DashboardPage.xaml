@@ -1,0 +1,428 @@
+<UserControl x:Class="LogViewerUI.Views.DashboardPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Background="#1E1E1E">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2D2D30" BorderBrush="#007ACC" BorderThickness="0,0,0,2" Padding="20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center">
+                    <TextBlock Text="🔍 Windows Event Log Analyzer" FontSize="32" FontWeight="Bold" Foreground="#00D4FF"/>
+                    <TextBlock x:Name="StatusText" FontSize="13" Foreground="#A0A0A0" Text="Ready to parse logs" Margin="0,5,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="RefreshBtn" Content="🔄 Refresh All" Padding="12,8" Click="RefreshAll_Click" Background="#007ACC" Foreground="White" FontSize="13" FontWeight="Bold" Margin="0,0,10,0"/>
+                    <Button x:Name="ExportBtn" Content="💾 Export CSV" Padding="12,8" Click="Export_Click" Background="#107C10" Foreground="White" FontSize="13" FontWeight="Bold" Margin="0,0,10,0"/>
+                    <Button x:Name="ClearBtn" Content="🗑️ Clear All" Padding="12,8" Click="ClearAll_Click" Background="#D13438" Foreground="White" FontSize="13" FontWeight="Bold"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Filter Bar -->
+        <Border Grid.Row="1" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,1,0,1" Padding="20">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="🔎 Filter by Level:" FontSize="13" FontWeight="Bold" Foreground="#00D4FF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                
+                <RadioButton x:Name="AllRadio" Content="All Logs" GroupName="LogLevel" IsChecked="True" 
+                             Foreground="#D4D4D4" Background="#1E1E1E" Margin="0,0,15,0" VerticalAlignment="Center" Checked="FilterLogs_Changed"/>
+                
+                <RadioButton x:Name="ErrorRadio" Content="🔴 Errors Only" GroupName="LogLevel" 
+                             Foreground="#F44747" Background="#1E1E1E" Margin="0,0,15,0" VerticalAlignment="Center" Checked="FilterLogs_Changed"/>
+                
+                <RadioButton x:Name="WarningRadio" Content="🟡 Warnings Only" GroupName="LogLevel" 
+                             Foreground="#DCDCAA" Background="#1E1E1E" Margin="0,0,15,0" VerticalAlignment="Center" Checked="FilterLogs_Changed"/>
+                
+                <RadioButton x:Name="InfoRadio" Content="ℹ️ Info Only" GroupName="LogLevel" 
+                             Foreground="#4EC9B0" Background="#1E1E1E" Margin="0,0,15,0" VerticalAlignment="Center" Checked="FilterLogs_Changed"/>
+            </StackPanel>
+        </Border>
+
+        <!-- TabControl with 95% Space -->
+        <TabControl Grid.Row="2" Background="#1E1E1E" BorderThickness="0">
+            <!-- Security Tab -->
+            <TabItem Header="🔐 Security" Name="SecurityTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Stats Bar -->
+                    <Border Grid.Row="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="1" Padding="15" Margin="20,20,20,10" CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Security Logs" FontSize="18" FontWeight="Bold" Foreground="#00D4FF"/>
+                                <TextBlock x:Name="SecurityCountText" Text="0 events loaded" FontSize="12" Foreground="#A0A0A0" Margin="0,5,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Errors" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="SecurityErrorCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#F44747" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Warnings" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="SecurityWarningCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#DCDCAA" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Info" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="SecurityInfoCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#4EC9B0" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- DataGrid -->
+                    <DataGrid Grid.Row="1" x:Name="SecurityGrid" Margin="20,0,20,20"
+                             AutoGenerateColumns="False" Background="#1E1E1E" Foreground="#D4D4D4" BorderBrush="#3E3E42" BorderThickness="1"
+                             VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" EnableRowVirtualization="True"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             RowHeight="35" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" CanUserSortColumns="False"
+                             HeadersVisibility="Column" RowDetailsVisibilityMode="VisibleWhenSelected">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="#00D4FF"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Padding" Value="8,5"/>
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="#1E1E1E"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Event ID" Binding="{Binding EventId}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Computer" Binding="{Binding Computer}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="User" Binding="{Binding User}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <Border Background="#2D2D30" Padding="15" Margin="40,5,5,5" CornerRadius="4">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="Bold" Foreground="#00D4FF" Text="Full Details"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="#D4D4D4" Text="{Binding Message}" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Firewall Tab -->
+            <TabItem Header="🔥 Firewall" Name="FirewallTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="1" Padding="15" Margin="20,20,20,10" CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Firewall Logs" FontSize="18" FontWeight="Bold" Foreground="#00D4FF"/>
+                                <TextBlock x:Name="FirewallCountText" Text="0 events loaded" FontSize="12" Foreground="#A0A0A0" Margin="0,5,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Errors" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="FirewallErrorCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#F44747" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Warnings" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="FirewallWarningCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#DCDCAA" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Info" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="FirewallInfoCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#4EC9B0" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <DataGrid Grid.Row="1" x:Name="FirewallGrid" Margin="20,0,20,20" AutoGenerateColumns="False" Background="#1E1E1E" Foreground="#D4D4D4" BorderBrush="#3E3E42" BorderThickness="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" EnableRowVirtualization="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" RowHeight="35" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" CanUserSortColumns="False" HeadersVisibility="Column" RowDetailsVisibilityMode="VisibleWhenSelected">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="#00D4FF"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Padding" Value="8,5"/>
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="#1E1E1E"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Event ID" Binding="{Binding EventId}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Computer" Binding="{Binding Computer}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="User" Binding="{Binding User}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <Border Background="#2D2D30" Padding="15" Margin="40,5,5,5" CornerRadius="4">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="Bold" Foreground="#00D4FF" Text="Full Details"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="#D4D4D4" Text="{Binding Message}" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- DNS Tab -->
+            <TabItem Header="🌐 DNS" Name="DnsTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="1" Padding="15" Margin="20,20,20,10" CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="DNS Logs" FontSize="18" FontWeight="Bold" Foreground="#00D4FF"/>
+                                <TextBlock x:Name="DnsCountText" Text="0 events loaded" FontSize="12" Foreground="#A0A0A0" Margin="0,5,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Errors" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="DnsErrorCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#F44747" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Warnings" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="DnsWarningCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#DCDCAA" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Info" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="DnsInfoCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#4EC9B0" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <DataGrid Grid.Row="1" x:Name="DnsGrid" Margin="20,0,20,20" AutoGenerateColumns="False" Background="#1E1E1E" Foreground="#D4D4D4" BorderBrush="#3E3E42" BorderThickness="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" EnableRowVirtualization="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" RowHeight="35" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" CanUserSortColumns="False" HeadersVisibility="Column" RowDetailsVisibilityMode="VisibleWhenSelected">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="#00D4FF"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Padding" Value="8,5"/>
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="#1E1E1E"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Event ID" Binding="{Binding EventId}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Computer" Binding="{Binding Computer}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="User" Binding="{Binding User}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <Border Background="#2D2D30" Padding="15" Margin="40,5,5,5" CornerRadius="4">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="Bold" Foreground="#00D4FF" Text="Full Details"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="#D4D4D4" Text="{Binding Message}" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Application Tab -->
+            <TabItem Header="📱 Application" Name="ApplicationTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="1" Padding="15" Margin="20,20,20,10" CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Application Logs" FontSize="18" FontWeight="Bold" Foreground="#00D4FF"/>
+                                <TextBlock x:Name="ApplicationCountText" Text="0 events loaded" FontSize="12" Foreground="#A0A0A0" Margin="0,5,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Errors" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="ApplicationErrorCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#F44747" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Warnings" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="ApplicationWarningCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#DCDCAA" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Info" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="ApplicationInfoCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#4EC9B0" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <DataGrid Grid.Row="1" x:Name="ApplicationGrid" Margin="20,0,20,20" AutoGenerateColumns="False" Background="#1E1E1E" Foreground="#D4D4D4" BorderBrush="#3E3E42" BorderThickness="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" EnableRowVirtualization="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" RowHeight="35" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" CanUserSortColumns="False" HeadersVisibility="Column" RowDetailsVisibilityMode="VisibleWhenSelected">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="#00D4FF"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Padding" Value="8,5"/>
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="#1E1E1E"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Event ID" Binding="{Binding EventId}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Computer" Binding="{Binding Computer}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="User" Binding="{Binding User}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <Border Background="#2D2D30" Padding="15" Margin="40,5,5,5" CornerRadius="4">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="Bold" Foreground="#00D4FF" Text="Full Details"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="#D4D4D4" Text="{Binding Message}" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- System Tab -->
+            <TabItem Header="⚙️ System" Name="SystemTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Border Grid.Row="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="1" Padding="15" Margin="20,20,20,10" CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="System Logs" FontSize="18" FontWeight="Bold" Foreground="#00D4FF"/>
+                                <TextBlock x:Name="SystemCountText" Text="0 events loaded" FontSize="12" Foreground="#A0A0A0" Margin="0,5,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Errors" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="SystemErrorCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#F44747" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Margin="0,0,20,0">
+                                    <TextBlock Text="Warnings" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="SystemWarningCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#DCDCAA" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Info" FontSize="10" Foreground="#A0A0A0" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="SystemInfoCount" Text="0" FontSize="16" FontWeight="Bold" Foreground="#4EC9B0" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <DataGrid Grid.Row="1" x:Name="SystemGrid" Margin="20,0,20,20" AutoGenerateColumns="False" Background="#1E1E1E" Foreground="#D4D4D4" BorderBrush="#3E3E42" BorderThickness="1" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" EnableRowVirtualization="True" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Auto" RowHeight="35" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" CanUserSortColumns="False" HeadersVisibility="Column" RowDetailsVisibilityMode="VisibleWhenSelected">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#2D2D30"/>
+                                <Setter Property="Foreground" Value="#00D4FF"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Padding" Value="8,5"/>
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Background" Value="#1E1E1E"/>
+                                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Event ID" Binding="{Binding EventId}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Computer" Binding="{Binding Computer}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="User" Binding="{Binding User}" Width="120" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <Border Background="#2D2D30" Padding="15" Margin="40,5,5,5" CornerRadius="4">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="Bold" Foreground="#00D4FF" Text="Full Details"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="#D4D4D4" Text="{Binding Message}" Margin="0,10,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

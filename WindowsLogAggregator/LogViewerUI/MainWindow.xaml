@@ -1,0 +1,10 @@
+<Window x:Class="LogViewerUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:LogViewerUI.Views"
+        Title="Windows Event Log Analyzer" Height="1080" Width="1920" 
+        WindowState="Maximized" ResizeMode="CanResize" Background="#1E1E1E">
+    <Grid>
+        <local:DashboardPage/>
+    </Grid>
+</Window>
